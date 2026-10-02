@@ -53,6 +53,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
+  // cookie หมดอายุ (8 ชม.) ระหว่างใช้งาน → API ตอบ 401 → ล้าง user แล้ว layout จะพาไปหน้า login เอง
+  // ไม่นับ /auth/* เพราะ login ผิดก็ได้ 401 ซึ่งหน้า login แสดงข้อความเอง
+  useEffect(() => {
+    const id = api.interceptors.response.use(undefined, (err) => {
+      const status = err?.response?.status;
+      const url: string = err?.config?.url ?? '';
+      if (status === 401 && !url.startsWith('/auth/')) setUser(null);
+      return Promise.reject(err);
+    });
+    return () => api.interceptors.response.eject(id);
+  }, []);
+
   async function login(email: string, password: string) {
     const res = await api.post<{ user: RawUser }>('/auth/login', { email, password });
     setUser(normalizeUser(res.data.user));

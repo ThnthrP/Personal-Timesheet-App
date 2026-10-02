@@ -2,22 +2,10 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHardHat, faRightToBracket, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../../lib/auth-context';
-
-// แปลง error จาก API เป็นข้อความสำหรับผู้ใช้
-// NestJS คืน message เป็น string (401/403) หรือ array (จาก ValidationPipe)
-function errorMessage(err: unknown): string {
-  if (axios.isAxiosError(err)) {
-    if (!err.response) return "Can't reach the server. Check your connection and try again.";
-    const msg = (err.response.data as { message?: string | string[] })?.message;
-    if (Array.isArray(msg) && msg.length > 0) return msg[0];
-    if (typeof msg === 'string') return msg;
-  }
-  return 'Sign in failed. Please try again.';
-}
+import { apiErrorMessage } from '../../lib/api-errors';
 
 const inputClass =
   'w-full border border-slate-300 rounded-lg px-4 py-2 outline-none ' +
@@ -46,7 +34,7 @@ export default function LoginPage() {
       await login(email.trim(), password);
       // redirect ทำใน useEffect ด้านบนเมื่อ user ถูก set
     } catch (err) {
-      setError(errorMessage(err));
+      setError(apiErrorMessage(err, 'Sign in failed. Please try again.'));
       setSubmitting(false);
     }
   }
