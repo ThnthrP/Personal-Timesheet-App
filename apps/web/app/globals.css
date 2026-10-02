@@ -1,26 +1,28 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* สีเดียวกับ tailwind.config ของ prototype — ใช้เป็น bg-primary, text-danger ฯลฯ ได้ทั้งแอป */
+@theme {
+  --color-primary: #1e3a8a;   /* blue-900 */
+  --color-secondary: #3b82f6; /* blue-500 */
+  --color-accent: #f59e0b;    /* amber-500 */
+  --color-success: #10b981;   /* emerald-500 */
+  --color-danger: #ef4444;    /* red-500 */
+  --color-surface: #f8fafc;   /* slate-50 */
+  --color-panel: #ffffff;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-inter), var(--font-noto-thai), system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  background-color: #f1f5f9; /* slate-100 เหมือน prototype */
+  color: #1e293b;            /* slate-800 */
 }
+
+/* Scrollbar แบบเดียวกับ prototype */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
