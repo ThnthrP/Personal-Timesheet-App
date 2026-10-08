@@ -26,3 +26,42 @@ body {
 ::-webkit-scrollbar-track { background: #f1f5f9; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ─── การพิมพ์รายงาน (Print / Save PDF) ───
+   กำหนดกระดาษ A4 และขอบ 15 มม. จากตัวแอป ผู้ใช้จึงไม่ต้องตั้ง Margins/Scale เอง
+   (ค่านี้ใช้เมื่อเลือก Margins = Default ใน Chrome ซึ่งเป็นค่าเริ่มต้น) */
+@page {
+  size: A4 portrait;
+  margin: 15mm;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+  }
+  /* พิมพ์พื้นหลังสีอ่อนของกล่องตัวเลขและหัวตาราง แม้ไม่ได้ติ๊ก Background graphics */
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* ตารางที่กำหนดความกว้างขั้นต่ำไว้สำหรับจอเล็ก ให้หดพอดีหน้ากระดาษตอนพิมพ์ */
+  table {
+    min-width: 0 !important;
+  }
+  tr,
+  thead,
+  tfoot {
+    break-inside: avoid;
+  }
+  /* รายงานตอนพิมพ์: ลดช่องว่างในตารางให้ชื่อคนงานและตัวเลขอยู่บรรทัดเดียว */
+  .print-report th,
+  .print-report td {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+  /* หัวตารางซ้ำทุกหน้าเมื่อรายงานยาวเกิน 1 หน้า */
+  thead {
+    display: table-header-group;
+  }
+}

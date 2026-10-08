@@ -26,7 +26,7 @@ export function AppHeader({ title, onOpenMenu }: AppHeaderProps) {
   }, []);
 
   return (
-    <header className="bg-white shadow-sm z-10 border-b border-slate-200">
+    <header className="bg-white shadow-sm z-10 border-b border-slate-200 print:hidden">
       <div className="flex justify-between items-center gap-4 px-4 py-4 md:px-8">
         <div className="flex items-center gap-3 min-w-0">
           <button

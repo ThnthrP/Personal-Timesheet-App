@@ -25,11 +25,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     <>
       {/* พื้นหลังมืดหลัง sidebar บนมือถือ — แตะเพื่อปิด */}
       {open && (
-        <div className="fixed inset-0 z-30 bg-black/50 md:hidden" onClick={onClose} aria-hidden="true" />
+        <div className="fixed inset-0 z-30 bg-black/50 md:hidden print:hidden" onClick={onClose} aria-hidden="true" />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-primary text-white flex flex-col shadow-xl transition-transform duration-200 md:static md:z-20 md:translate-x-0 ${
+        className={`print:hidden fixed inset-y-0 left-0 z-40 w-64 bg-primary text-white flex flex-col shadow-xl transition-transform duration-200 md:static md:z-20 md:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >

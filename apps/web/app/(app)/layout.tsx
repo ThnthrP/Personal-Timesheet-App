@@ -39,11 +39,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (!allowed) return <div className="min-h-screen bg-slate-100" />;
 
   return (
-    <div className="flex h-dvh w-full overflow-hidden text-slate-800">
+    <div className="flex h-dvh w-full overflow-hidden text-slate-800 print:block print:h-auto print:overflow-visible">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-slate-100">
+      <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-slate-100 print:h-auto print:overflow-visible print:bg-white">
         <AppHeader title={navItem?.title ?? ''} onOpenMenu={() => setSidebarOpen(true)} />
-        <div className="flex-1 overflow-y-auto p-4 md:p-8">{children}</div>
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 print:overflow-visible print:p-0">{children}</div>
       </main>
     </div>
   );
