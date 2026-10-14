@@ -41,11 +41,8 @@ PTA covers the full cycle from field log to payroll:
 
 #### 📝 Field Input
 Daily log form (project, date, notes) with a Manpower Hours table and live ST / OT calculation.
+Below the form, **My Recent Submissions** shows each log's status, the PM's rejection reason, and Edit & Resubmit.
 ![Field Input](screenshots/field-input.png)
-
-#### 🗂 My Recent Submissions
-Submission history with status, rejection reason, and Edit & Resubmit.
-![Submissions](screenshots/submissions.png)
 
 ### Review
 
