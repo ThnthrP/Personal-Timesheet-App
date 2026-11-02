@@ -15,6 +15,10 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 
 const COOKIE_NAME = 'access_token';
 const isProd = process.env.NODE_ENV === 'production';
+// COOKIE_SECURE=false ใช้ตอนยังเป็น http ภายใน ไม่ตั้ง = ตาม NODE_ENV เหมือนเดิม
+const cookieSecure = process.env.COOKIE_SECURE
+    ? process.env.COOKIE_SECURE === 'true'
+    : isProd;
 
 @Controller('auth')
 export class AuthController {
@@ -27,7 +31,8 @@ export class AuthController {
 
         res.cookie(COOKIE_NAME, accessToken, {
             httpOnly: true,
-            secure: isProd, // https เท่านั้นตอน production
+            // secure: isProd, // https เท่านั้นตอน production
+            secure: cookieSecure,
             sameSite: 'lax',
             maxAge: 8 * 60 * 60 * 1000, // 8 ชั่วโมง ตรงกับ JWT_EXPIRES_IN
         });
