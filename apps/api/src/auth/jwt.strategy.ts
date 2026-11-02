@@ -3,6 +3,12 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Request } from 'express';
 
+function requireJwtSecret(): string {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) throw new Error('JWT_SECRET is not set');
+    return secret;
+}
+
 // ดึง JWT จาก HTTP-only cookie ชื่อ "access_token" แทนที่จะดึงจาก Authorization header
 // (ตามที่วางแผนไว้ตั้งแต่ต้น — ปลอดภัยกว่า localStorage เพราะ JS ฝั่ง client อ่านไม่ได้)
 const cookieExtractor = (req: Request): string | null => {
@@ -18,7 +24,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         super({
             jwtFromRequest: cookieExtractor,
             ignoreExpiration: false,
-            secretOrKey: process.env.JWT_SECRET,
+            // secretOrKey: process.env.JWT_SECRET,
+            secretOrKey: requireJwtSecret(),
         });
     }
 
