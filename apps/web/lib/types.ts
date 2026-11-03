@@ -38,6 +38,8 @@ export interface Project {
   code: string;
   name: string;
   active: boolean;
+  /** true = sync มาจาก MMS */
+  fromMms?: boolean;
   createdAt: ISODateString;
   updatedAt: ISODateString;
 }
@@ -47,6 +49,8 @@ export interface Trade {
   name: string;
   suggestedRate: DecimalString | null;
   active: boolean;
+  /** Position.id ใน MMS — null = สร้างใน PTA เอง */
+  mmsPositionId?: string | null;
   createdAt: ISODateString;
   updatedAt: ISODateString;
 }
@@ -58,6 +62,10 @@ export interface Worker {
   /** มีเฉพาะใน GET /workers (findAll include มา) — POST และ PATCH ไม่มี */
   defaultTrade?: Trade | null;
   active: boolean;
+  /** รหัสพนักงานจาก MMS เช่น EXPT-001 */
+  empCode?: string | null;
+  /** Employee.id ใน MMS — null = สร้างใน PTA เอง */
+  mmsEmployeeId?: string | null;
   createdAt: ISODateString;
   updatedAt: ISODateString;
 }
@@ -229,4 +237,33 @@ export interface PayrollAggregate {
 export interface PayrollGateError {
   message: string;
   approvedPeriods: { periodStart: ISODateString; periodEnd: ISODateString }[];
+}
+
+export interface MmsSyncCounts {
+  created: number;
+  updated: number;
+  deactivated: number;
+  unchanged: number;
+}
+
+export interface MmsSyncSummary {
+  trades: MmsSyncCounts;
+  workers: MmsSyncCounts;
+  projects: MmsSyncCounts;
+  workersWithoutPosition: number;
+}
+
+export interface MmsSyncStatus {
+  configured: boolean;
+  intervalMinutes: number;
+  running: boolean;
+  lastRun: {
+    id: string;
+    trigger: 'auto' | 'manual';
+    startedAt: ISODateString;
+    finishedAt: ISODateString | null;
+    ok: boolean | null;
+    summary: MmsSyncSummary | null;
+    error: string | null;
+  } | null;
 }

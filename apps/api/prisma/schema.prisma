@@ -73,6 +73,7 @@ model Project {
   code      String   @unique
   name      String
   active    Boolean  @default(true)
+  fromMms   Boolean  @default(false) // true = sync มาจาก MMS (จับคู่ด้วย code = รหัส ON)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -86,6 +87,7 @@ model Trade {
   name          String   @unique
   suggestedRate Decimal? @db.Decimal(10, 2)
   active        Boolean  @default(true)
+  mmsPositionId String?  @unique // Position.id ใน MMS — null = สร้างใน PTA เอง
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -102,6 +104,8 @@ model Worker {
   defaultTradeId String?
   defaultTrade   Trade?   @relation(fields: [defaultTradeId], references: [id])
   active         Boolean  @default(true)
+  empCode        String? // รหัสพนักงานจาก MMS (เช่น EXPT-001) — ใช้แสดงผล
+  mmsEmployeeId  String?  @unique // Employee.id ใน MMS — null = สร้างใน PTA เอง
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -218,4 +222,21 @@ model PeriodApproval {
 
   @@unique([periodStart, periodEnd])
   @@map("period_approvals")
+}
+
+// ─────────────────────────────────────────────────────────────
+// MMS Sync — ประวัติการดึง Project / Worker / Trade จาก MMS
+// ─────────────────────────────────────────────────────────────
+
+model MmsSyncRun {
+  id         String    @id @default(uuid())
+  trigger    String // "auto" | "manual"
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  ok         Boolean?
+  summary    Json?
+  error      String?
+
+  @@index([startedAt])
+  @@map("mms_sync_runs")
 }

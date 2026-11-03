@@ -75,6 +75,9 @@ function activeOptions<T extends { id: string; active: boolean }>(
     .map((item) => ({ value: item.id, label: item.active ? label(item) : `${label(item)} (inactive)` }));
 }
 
+/** ชื่อ + รหัสพนักงาน (จาก MMS) — กันเลือกผิดคนเมื่อชื่อซ้ำ และพิมพ์ค้นด้วยรหัสได้ */
+const workerLabel = (w: Worker) => (w.empCode ? `${w.name} (${w.empCode})` : w.name);
+
 export default function FieldInputPage() {
   const { user } = useAuth();
   const toast = useToast();
@@ -467,7 +470,7 @@ export default function FieldInputPage() {
                               compact
                               instanceId={`${row.key}-worker`}
                               ariaLabel={`Worker, row ${i + 1}`}
-                              options={activeOptions(workers, row.workerId, (w) => w.name)}
+                              options={activeOptions(workers, row.workerId, workerLabel)}
                               value={row.workerId}
                               onChange={(v) => handleWorkerChange(row.key, v)}
                               placeholder="Select Worker..."

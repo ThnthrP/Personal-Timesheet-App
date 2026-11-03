@@ -6,6 +6,7 @@ import {
   faCircleInfo,
   faFileCsv,
   faPlus,
+  faRotate,
   faSpinner,
   faTriangleExclamation,
   faUserShield,
@@ -14,7 +15,7 @@ import { api } from '../../../lib/api';
 import { useToast } from '../../../lib/toast';
 import { apiErrorMessage } from '../../../lib/api-errors';
 import { toDateKey, todayKey, toNumber } from '../../../lib/format';
-import type { CalendarOverride, Project, Trade, Worker } from '../../../lib/types';
+import type { CalendarOverride, MmsSyncStatus, MmsSyncSummary, Project, Trade, Worker } from '../../../lib/types';
 import { SearchableSelect } from '../../../components/SearchableSelect';
 import {
   AddForm,
@@ -64,6 +65,8 @@ export default function AdminPage() {
   const [showInactive, setShowInactive] = useState(false);
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [mms, setMms] = useState<MmsSyncStatus | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   // ─── ฟอร์มของแต่ละแท็บ ───
   const [tradeForm, setTradeForm] = useState({ name: '', rate: '' });
@@ -81,13 +84,15 @@ export default function AdminPage() {
       workers: async () => setWorkers((await api.get<Worker[]>('/workers')).data),
       projects: async () => setProjects((await api.get<Project[]>('/projects')).data),
       calendar: async () => setCalendar((await api.get<CalendarOverride[]>('/calendar-overrides')).data),
+      // ไม่ให้หน้า Admin ล้มถ้า API ยังไม่มี endpoint นี้ — ถือว่าไม่ได้เชื่อม MMS
+      mms: async () => setMms(await api.get<MmsSyncStatus>('/mms-sync/status').then((r) => r.data, () => null)),
     }),
     [],
   );
 
   const loadAll = useCallback(async () => {
     try {
-      await Promise.all([loaders.trades(), loaders.workers(), loaders.projects(), loaders.calendar()]);
+      await Promise.all([loaders.trades(), loaders.workers(), loaders.projects(), loaders.calendar(), loaders.mms()]);
       setLoadState('ready');
     } catch (err) {
       setLoadError(apiErrorMessage(err, 'Could not load master data.'));
@@ -129,6 +134,27 @@ export default function AdminPage() {
       toast(`Update failed: ${apiErrorMessage(err)}`, true);
     } finally {
       setBusyId(null);
+    }
+  }
+
+  // ─── MMS Sync ───
+  /** เชื่อม MMS แล้ว = Trade / Worker / Project มาจาก MMS เท่านั้น (เพิ่ม / ปิดเองในหน้านี้ไม่ได้ เพราะ sync รอบถัดไปจะทับ) */
+  const mmsManaged = Boolean(mms?.configured);
+
+  async function syncNow() {
+    setSyncing(true);
+    try {
+      const { data } = await api.post<MmsSyncSummary>('/mms-sync/run');
+      const changed = (c: MmsSyncSummary['workers']) => c.created + c.updated + c.deactivated;
+      toast(
+        `Synced from MMS — workers ${changed(data.workers)}, trades ${changed(data.trades)}, projects ${changed(data.projects)} changed.`,
+      );
+      await Promise.all([loaders.trades(), loaders.workers(), loaders.projects()]);
+    } catch (err) {
+      toast(`Sync failed: ${apiErrorMessage(err)}`, true);
+    } finally {
+      setSyncing(false);
+      await loaders.mms();
     }
   }
 
@@ -212,7 +238,7 @@ export default function AdminPage() {
   const tradeById = useMemo(() => new Map(trades.map((t) => [t.id, t])), [trades]);
   const visibleTrades = trades.filter((t) => (showInactive || t.active) && matches(search, t.name));
   const visibleWorkers = workers.filter(
-    (w) => (showInactive || w.active) && matches(search, w.name, w.defaultTrade?.name),
+    (w) => (showInactive || w.active) && matches(search, w.name, w.empCode, w.defaultTrade?.name),
   );
   const visibleProjects = projects.filter((p) => (showInactive || p.active) && matches(search, p.code, p.name));
   const today = todayKey();
@@ -286,6 +312,27 @@ export default function AdminPage() {
         are managed under Worker Contracts (Accounting).
       </p>
 
+      {mms?.configured && (
+        <div className="bg-white border border-slate-200 rounded-xl p-4 mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="text-sm">
+            <p className="font-medium text-slate-800">Trades, workers and projects come from MMS</p>
+            <p className="text-slate-500">
+              {mms.intervalMinutes ? `Synced automatically every ${mms.intervalMinutes} min. ` : ''}
+              Last sync: <MmsLastRun status={mms} />
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => void syncNow()}
+            disabled={syncing || mms.running}
+            className={primaryBtn}
+          >
+            <FontAwesomeIcon icon={faRotate} spin={syncing} className="mr-1" />
+            {syncing ? 'Syncing...' : 'Sync from MMS'}
+          </button>
+        </div>
+      )}
+
       {/* ─── Trades ─── */}
       {tab === 'trades' && (
         <div role="tabpanel">
@@ -297,38 +344,40 @@ export default function AdminPage() {
               contract.
             </p>
           </div>
-          <AddForm onSubmit={addTrade}>
-            <div className="flex-1 min-w-[12rem]">
-              <label htmlFor="new-trade-name" className="block text-xs font-medium text-slate-600 mb-1">
-                Trade Name
-              </label>
-              <input
-                id="new-trade-name"
-                value={tradeForm.name}
-                onChange={(e) => setTradeForm((f) => ({ ...f, name: e.target.value }))}
-                className={fieldClass}
-              />
-            </div>
-            <div className="w-40">
-              <label htmlFor="new-trade-rate" className="block text-xs font-medium text-slate-600 mb-1">
-                Suggested Rate (฿) <span className="text-slate-400">optional</span>
-              </label>
-              <input
-                id="new-trade-rate"
-                type="number"
-                step="0.01"
-                min="0"
-                inputMode="decimal"
-                value={tradeForm.rate}
-                onChange={(e) => setTradeForm((f) => ({ ...f, rate: e.target.value }))}
-                className={fieldClass}
-              />
-            </div>
-            <button type="submit" disabled={saving} className={primaryBtn}>
-              <FontAwesomeIcon icon={saving ? faSpinner : faPlus} spin={saving} className="mr-1" />
-              Add Trade
-            </button>
-          </AddForm>
+          {!mmsManaged && (
+            <AddForm onSubmit={addTrade}>
+              <div className="flex-1 min-w-[12rem]">
+                <label htmlFor="new-trade-name" className="block text-xs font-medium text-slate-600 mb-1">
+                  Trade Name
+                </label>
+                <input
+                  id="new-trade-name"
+                  value={tradeForm.name}
+                  onChange={(e) => setTradeForm((f) => ({ ...f, name: e.target.value }))}
+                  className={fieldClass}
+                />
+              </div>
+              <div className="w-40">
+                <label htmlFor="new-trade-rate" className="block text-xs font-medium text-slate-600 mb-1">
+                  Suggested Rate (฿) <span className="text-slate-400">optional</span>
+                </label>
+                <input
+                  id="new-trade-rate"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  inputMode="decimal"
+                  value={tradeForm.rate}
+                  onChange={(e) => setTradeForm((f) => ({ ...f, rate: e.target.value }))}
+                  className={fieldClass}
+                />
+              </div>
+              <button type="submit" disabled={saving} className={primaryBtn}>
+                <FontAwesomeIcon icon={saving ? faSpinner : faPlus} spin={saving} className="mr-1" />
+                Add Trade
+              </button>
+            </AddForm>
+          )}
           <SearchBar
             value={search}
             onChange={setSearch}
@@ -360,11 +409,15 @@ export default function AdminPage() {
                     <StatusText active={t.active} />
                   </td>
                   <td className="px-6 py-3 text-center">
-                    <ToggleButton
-                      active={t.active}
-                      busy={busyId === t.id}
-                      onClick={() => void toggle('trades', t.id, t.active, loaders.trades)}
-                    />
+                    {mmsManaged ? (
+                      <span className="text-xs text-slate-400">From MMS</span>
+                    ) : (
+                      <ToggleButton
+                        active={t.active}
+                        busy={busyId === t.id}
+                        onClick={() => void toggle('trades', t.id, t.active, loaders.trades)}
+                      />
+                    )}
                   </td>
                 </tr>
               );
@@ -376,42 +429,44 @@ export default function AdminPage() {
       {/* ─── Workers ─── */}
       {tab === 'workers' && (
         <div role="tabpanel">
-          <AddForm onSubmit={addWorker}>
-            <div className="flex-1 min-w-[12rem]">
-              <label htmlFor="new-worker-name" className="block text-xs font-medium text-slate-600 mb-1">
-                Worker Name
-              </label>
-              <input
-                id="new-worker-name"
-                value={workerForm.name}
-                onChange={(e) => setWorkerForm((f) => ({ ...f, name: e.target.value }))}
-                placeholder="e.g. Somchai Jaidee"
-                className={fieldClass}
-              />
-            </div>
-            <div className="w-56">
-              <label htmlFor="new-worker-trade" className="block text-xs font-medium text-slate-600 mb-1">
-                Default Trade <span className="text-slate-400">optional</span>
-              </label>
-              <SearchableSelect
-                compact
-                instanceId="new-worker-trade"
-                inputId="new-worker-trade"
-                options={activeTradeOptions}
-                value={workerForm.tradeId}
-                onChange={(v) => setWorkerForm((f) => ({ ...f, tradeId: v }))}
-                placeholder="Select Trade..."
-              />
-            </div>
-            <button type="submit" disabled={saving} className={primaryBtn}>
-              <FontAwesomeIcon icon={saving ? faSpinner : faPlus} spin={saving} className="mr-1" />
-              Add Worker
-            </button>
-          </AddForm>
+          {!mmsManaged && (
+            <AddForm onSubmit={addWorker}>
+              <div className="flex-1 min-w-[12rem]">
+                <label htmlFor="new-worker-name" className="block text-xs font-medium text-slate-600 mb-1">
+                  Worker Name
+                </label>
+                <input
+                  id="new-worker-name"
+                  value={workerForm.name}
+                  onChange={(e) => setWorkerForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="e.g. Somchai Jaidee"
+                  className={fieldClass}
+                />
+              </div>
+              <div className="w-56">
+                <label htmlFor="new-worker-trade" className="block text-xs font-medium text-slate-600 mb-1">
+                  Default Trade <span className="text-slate-400">optional</span>
+                </label>
+                <SearchableSelect
+                  compact
+                  instanceId="new-worker-trade"
+                  inputId="new-worker-trade"
+                  options={activeTradeOptions}
+                  value={workerForm.tradeId}
+                  onChange={(v) => setWorkerForm((f) => ({ ...f, tradeId: v }))}
+                  placeholder="Select Trade..."
+                />
+              </div>
+              <button type="submit" disabled={saving} className={primaryBtn}>
+                <FontAwesomeIcon icon={saving ? faSpinner : faPlus} spin={saving} className="mr-1" />
+                Add Worker
+              </button>
+            </AddForm>
+          )}
           <SearchBar
             value={search}
             onChange={setSearch}
-            placeholder="Search name or trade"
+            placeholder="Search name, code or trade"
             inactiveCount={workers.filter((w) => !w.active).length}
             showInactive={showInactive}
             onShowInactive={setShowInactive}
@@ -448,7 +503,10 @@ export default function AdminPage() {
           >
             {visibleWorkers.map((w) => (
               <tr key={w.id} className={w.active ? undefined : 'text-slate-400'}>
-                <td className="px-6 py-3 font-medium">{w.name}</td>
+                <td className="px-6 py-3 font-medium">
+                  {w.name}
+                  {w.empCode && <span className="ml-2 text-xs font-normal text-slate-400">{w.empCode}</span>}
+                </td>
                 <td className="px-6 py-3">
                   {(w.defaultTradeId && tradeById.get(w.defaultTradeId)?.name) || (
                     <span className="text-slate-400">—</span>
@@ -458,11 +516,15 @@ export default function AdminPage() {
                   <StatusText active={w.active} />
                 </td>
                 <td className="px-6 py-3 text-center">
-                  <ToggleButton
-                    active={w.active}
-                    busy={busyId === w.id}
-                    onClick={() => void toggle('workers', w.id, w.active, loaders.workers)}
-                  />
+                  {mmsManaged ? (
+                    <span className="text-xs text-slate-400">From MMS</span>
+                  ) : (
+                    <ToggleButton
+                      active={w.active}
+                      busy={busyId === w.id}
+                      onClick={() => void toggle('workers', w.id, w.active, loaders.workers)}
+                    />
+                  )}
                 </td>
               </tr>
             ))}
@@ -473,35 +535,37 @@ export default function AdminPage() {
       {/* ─── Projects ─── */}
       {tab === 'projects' && (
         <div role="tabpanel">
-          <AddForm onSubmit={addProject}>
-            <div className="w-44">
-              <label htmlFor="new-project-code" className="block text-xs font-medium text-slate-600 mb-1">
-                Code
-              </label>
-              <input
-                id="new-project-code"
-                value={projectForm.code}
-                onChange={(e) => setProjectForm((f) => ({ ...f, code: e.target.value }))}
-                placeholder="ON/037-01/2026"
-                className={`${fieldClass} uppercase`}
-              />
-            </div>
-            <div className="flex-1 min-w-[12rem]">
-              <label htmlFor="new-project-name" className="block text-xs font-medium text-slate-600 mb-1">
-                Project Name
-              </label>
-              <input
-                id="new-project-name"
-                value={projectForm.name}
-                onChange={(e) => setProjectForm((f) => ({ ...f, name: e.target.value }))}
-                className={fieldClass}
-              />
-            </div>
-            <button type="submit" disabled={saving} className={primaryBtn}>
-              <FontAwesomeIcon icon={saving ? faSpinner : faPlus} spin={saving} className="mr-1" />
-              Add Project
-            </button>
-          </AddForm>
+          {!mmsManaged && (
+            <AddForm onSubmit={addProject}>
+              <div className="w-44">
+                <label htmlFor="new-project-code" className="block text-xs font-medium text-slate-600 mb-1">
+                  Code
+                </label>
+                <input
+                  id="new-project-code"
+                  value={projectForm.code}
+                  onChange={(e) => setProjectForm((f) => ({ ...f, code: e.target.value }))}
+                  placeholder="ON/037-01/2026"
+                  className={`${fieldClass} uppercase`}
+                />
+              </div>
+              <div className="flex-1 min-w-[12rem]">
+                <label htmlFor="new-project-name" className="block text-xs font-medium text-slate-600 mb-1">
+                  Project Name
+                </label>
+                <input
+                  id="new-project-name"
+                  value={projectForm.name}
+                  onChange={(e) => setProjectForm((f) => ({ ...f, name: e.target.value }))}
+                  className={fieldClass}
+                />
+              </div>
+              <button type="submit" disabled={saving} className={primaryBtn}>
+                <FontAwesomeIcon icon={saving ? faSpinner : faPlus} spin={saving} className="mr-1" />
+                Add Project
+              </button>
+            </AddForm>
+          )}
           <SearchBar
             value={search}
             onChange={setSearch}
@@ -529,11 +593,15 @@ export default function AdminPage() {
                   <StatusText active={p.active} />
                 </td>
                 <td className="px-6 py-3 text-center">
-                  <ToggleButton
-                    active={p.active}
-                    busy={busyId === p.id}
-                    onClick={() => void toggle('projects', p.id, p.active, loaders.projects)}
-                  />
+                  {mmsManaged ? (
+                    <span className="text-xs text-slate-400">From MMS</span>
+                  ) : (
+                    <ToggleButton
+                      active={p.active}
+                      busy={busyId === p.id}
+                      onClick={() => void toggle('projects', p.id, p.active, loaders.projects)}
+                    />
+                  )}
                 </td>
               </tr>
             ))}
@@ -653,5 +721,22 @@ export default function AdminPage() {
         </div>
       )}
     </section>
+  );
+}
+
+function MmsLastRun({ status }: { status: MmsSyncStatus }) {
+  const run = status.lastRun;
+  if (!run) return <span>never</span>;
+  const when = new Date(run.finishedAt ?? run.startedAt).toLocaleString();
+  if (run.ok === null) return <span>running since {when}</span>;
+  if (!run.ok) return <span className="text-danger">failed at {when} — {run.error}</span>;
+  const missing = run.summary?.workersWithoutPosition ?? 0;
+  return (
+    <span>
+      {when}
+      {missing > 0 && (
+        <span className="text-amber-700"> · {missing} worker(s) have no position in MMS</span>
+      )}
+    </span>
   );
 }

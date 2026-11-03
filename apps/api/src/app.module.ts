@@ -7,6 +7,7 @@ import { TimesheetModule } from './timesheet/timesheet.module';
 import { AdminModule } from './admin/admin.module';
 import { WorkerContractModule } from './worker-contract/worker-contract.module';
 import { PayrollModule } from './payroll/payroll.module';
+import { MmsSyncModule } from './mms-sync/mms-sync.module';
 
 @Module({
   imports: [
@@ -16,8 +17,9 @@ import { PayrollModule } from './payroll/payroll.module';
     AdminModule,
     WorkerContractModule,
     PayrollModule,
+    MmsSyncModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule { }
