@@ -172,7 +172,7 @@ export default function PayrollPage() {
 
   if (initState === 'loading') {
     return (
-      <section className="max-w-6xl mx-auto">
+      <section className="max-w-7xl mx-auto">
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 py-16 text-center text-slate-400">
           <FontAwesomeIcon icon={faSpinner} spin className="text-2xl mb-3" />
           <p>Loading...</p>
@@ -183,7 +183,7 @@ export default function PayrollPage() {
 
   if (initState === 'error') {
     return (
-      <section className="max-w-6xl mx-auto">
+      <section className="max-w-7xl mx-auto">
         <div className="bg-white rounded-xl shadow-sm border border-red-200 py-12 px-6 text-center">
           <FontAwesomeIcon icon={faTriangleExclamation} className="text-3xl text-danger mb-3" />
           <p className="font-medium text-slate-800">Could not load payroll data.</p>
@@ -206,7 +206,7 @@ export default function PayrollPage() {
   const hasData = !!agg && agg.workerSummaries.length > 0;
 
   return (
-    <section className="max-w-6xl mx-auto">
+    <section className="max-w-7xl mx-auto">
       <div className="mb-6 print:hidden">
         <h3 className="font-semibold text-slate-800 text-lg mb-1">Payroll</h3>
         <p className="text-sm text-slate-500">

@@ -238,7 +238,7 @@ export default function AdminPage() {
   const tradeById = useMemo(() => new Map(trades.map((t) => [t.id, t])), [trades]);
   const visibleTrades = trades.filter((t) => (showInactive || t.active) && matches(search, t.name));
   const visibleWorkers = workers.filter(
-    (w) => (showInactive || w.active) && matches(search, w.name, w.empCode, w.defaultTrade?.name),
+    (w) => (showInactive || w.active) && matches(search, w.name, w.empId, w.defaultTrade?.name),
   );
   const visibleProjects = projects.filter((p) => (showInactive || p.active) && matches(search, p.code, p.name));
   const today = todayKey();
@@ -252,7 +252,7 @@ export default function AdminPage() {
 
   if (loadState === 'loading') {
     return (
-      <section className="max-w-6xl mx-auto">
+      <section className="max-w-7xl mx-auto">
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 py-16 text-center text-slate-400">
           <FontAwesomeIcon icon={faSpinner} spin className="text-2xl mb-3" />
           <p>Loading master data...</p>
@@ -263,7 +263,7 @@ export default function AdminPage() {
 
   if (loadState === 'error') {
     return (
-      <section className="max-w-6xl mx-auto">
+      <section className="max-w-7xl mx-auto">
         <div className="bg-white rounded-xl shadow-sm border border-red-200 py-12 px-6 text-center">
           <FontAwesomeIcon icon={faTriangleExclamation} className="text-3xl text-danger mb-3" />
           <p className="font-medium text-slate-800">{loadError}</p>
@@ -283,7 +283,7 @@ export default function AdminPage() {
   }
 
   return (
-    <section className="max-w-6xl mx-auto">
+    <section className="max-w-7xl mx-auto">
       <div className="mb-6">
         <h3 className="font-semibold text-slate-800 text-lg mb-1">Master Data</h3>
         <p className="text-sm text-slate-500">
@@ -466,7 +466,7 @@ export default function AdminPage() {
           <SearchBar
             value={search}
             onChange={setSearch}
-            placeholder="Search name, code or trade"
+            placeholder="Search name, employee ID or trade"
             inactiveCount={workers.filter((w) => !w.active).length}
             showInactive={showInactive}
             onShowInactive={setShowInactive}
@@ -475,8 +475,9 @@ export default function AdminPage() {
                 type="button"
                 onClick={() =>
                   downloadCsv(`workers_${today}.csv`, [
-                    ['Worker Name', 'Default Trade', 'Status'],
+                    ['Employee ID', 'Worker Name', 'Default Trade', 'Status'],
                     ...workers.map((w) => [
+                      w.empId ?? '',
                       w.name,
                       (w.defaultTradeId && tradeById.get(w.defaultTradeId)?.name) || '',
                       w.active ? 'Active' : 'Inactive',
@@ -505,7 +506,7 @@ export default function AdminPage() {
               <tr key={w.id} className={w.active ? undefined : 'text-slate-400'}>
                 <td className="px-6 py-3 font-medium">
                   {w.name}
-                  {w.empCode && <span className="ml-2 text-xs font-normal text-slate-400">{w.empCode}</span>}
+                  {w.empId && <span className="ml-2 text-xs font-normal text-slate-400">{w.empId}</span>}
                 </td>
                 <td className="px-6 py-3">
                   {(w.defaultTradeId && tradeById.get(w.defaultTradeId)?.name) || (

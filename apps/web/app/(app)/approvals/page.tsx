@@ -134,7 +134,7 @@ export default function ApprovalsPage() {
   // ─── แสดงผล ───
   if (loadState === 'loading') {
     return (
-      <section className="max-w-6xl mx-auto">
+      <section className="max-w-7xl mx-auto">
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 py-16 text-center text-slate-400">
           <FontAwesomeIcon icon={faSpinner} spin className="text-2xl mb-3" />
           <p>Loading timesheets...</p>
@@ -145,7 +145,7 @@ export default function ApprovalsPage() {
 
   if (loadState === 'error') {
     return (
-      <section className="max-w-6xl mx-auto">
+      <section className="max-w-7xl mx-auto">
         <div className="bg-white rounded-xl shadow-sm border border-red-200 py-12 px-6 text-center">
           <FontAwesomeIcon icon={faTriangleExclamation} className="text-3xl text-danger mb-3" />
           <p className="font-medium text-slate-800">{loadError}</p>
@@ -165,7 +165,7 @@ export default function ApprovalsPage() {
   }
 
   return (
-    <section className="max-w-6xl mx-auto">
+    <section className="max-w-7xl mx-auto">
       {/* ─── Pending Approvals ─── */}
       <div className="mb-6 flex flex-wrap justify-between items-end gap-4">
         <div>

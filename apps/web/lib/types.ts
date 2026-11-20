@@ -64,6 +64,8 @@ export interface Worker {
   active: boolean;
   /** รหัสพนักงานจาก MMS เช่น EXPT-001 */
   empCode?: string | null;
+  /** รหัสพนักงานฝั่ง client จาก MMS เช่น 38561733 — แสดงคู่ชื่อแทน empCode (ใช้ workerCode() ใน format.ts) */
+  empId?: string | null;
   /** Employee.id ใน MMS — null = สร้างใน PTA เอง */
   mmsEmployeeId?: string | null;
   createdAt: ISODateString;

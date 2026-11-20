@@ -34,3 +34,23 @@ export function formatMoney(amount: number | DecimalString | null | undefined): 
 export function formatHours(hours: number): string {
   return hours.toFixed(1);
 }
+
+// ─── รหัสพนักงาน ───────────────────────────────────────────
+
+interface WorkerCodeFields {
+  empId?: string | null;
+}
+
+/**
+ * รหัสที่แสดงคู่ชื่อคนงาน = Employee ID ฝั่ง client (เช่น 38561733) เท่านั้น
+ * ไม่ใช้ empCode (EXPT-001) แทน — คนที่ MMS ยังไม่มี Employee ID หรือสร้างใน PTA เองจะได้ null (แสดงแค่ชื่อ)
+ */
+export function workerCode(w: WorkerCodeFields): string | null {
+  return w.empId?.trim() || null;
+}
+
+/** "ชื่อ (รหัส)" สำหรับ dropdown และตาราง เช่น "Nikorn Manget (38561733)" */
+export function workerLabel(w: WorkerCodeFields & { name: string }): string {
+  const code = workerCode(w);
+  return code ? `${w.name} (${code})` : w.name;
+}

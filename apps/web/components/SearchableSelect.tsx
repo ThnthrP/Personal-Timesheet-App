@@ -53,7 +53,17 @@ export function SearchableSelect({
       unstyled
       menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
       menuPlacement="auto"
-      styles={{ menuPortal: (base) => ({ ...base, zIndex: 50 }) }}
+      styles={{
+        menuPortal: (base) => ({ ...base, zIndex: 50 }),
+        // รายการที่เด้งลงมากว้างตามข้อความ (อย่างน้อยเท่าช่อง ไม่เกิน 28rem) — ชื่อ + Employee ID จะไม่ตกบรรทัด
+        // ช่องในตารางยังแคบเท่าเดิม คอลัมน์อื่นไม่ถูกเบียด
+        menu: (base) => ({
+          ...base,
+          width: 'max-content',
+          minWidth: '100%',
+          maxWidth: 'min(28rem, calc(100vw - 2rem))',
+        }),
+      }}
       classNames={{
         control: ({ isFocused, isDisabled: disabled }) =>
           [

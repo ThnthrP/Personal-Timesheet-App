@@ -213,7 +213,7 @@ export default function PeriodSignOffPage() {
   );
 
   return (
-    <section className="max-w-6xl mx-auto">
+    <section className="max-w-7xl mx-auto">
       <div className="mb-6 print:hidden">
         <h3 className="font-semibold text-slate-800 text-lg mb-1">Period Sign-off</h3>
         <p className="text-sm text-slate-500">

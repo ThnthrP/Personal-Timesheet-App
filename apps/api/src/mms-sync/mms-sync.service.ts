@@ -205,18 +205,21 @@ export class MmsSyncService implements OnModuleInit, OnModuleDestroy {
             const defaultTradeId = (emp.positionId && tradeIdByPositionId.get(emp.positionId)) || null;
             if (!defaultTradeId) summary.workersWithoutPosition++;
             const empCode = emp.empCode?.trim() || null;
+            // รหัสพนักงานฝั่ง client (เช่น 38561733) — บางคนใน MMS ยังไม่มี จึงเป็น null ได้
+            const empId = emp.empId?.trim() || null;
 
             const existing = workerByMmsId.get(emp.id);
             if (existing) {
                 const changed =
                     existing.name !== name ||
                     existing.empCode !== empCode ||
+                    existing.empId !== empId ||
                     existing.defaultTradeId !== defaultTradeId ||
                     !existing.active;
                 if (changed) {
                     await tx.worker.update({
                         where: { id: existing.id },
-                        data: { name, empCode, defaultTradeId, active: true },
+                        data: { name, empCode, empId, defaultTradeId, active: true },
                     });
                     summary.workers.updated++;
                 } else {
@@ -225,7 +228,7 @@ export class MmsSyncService implements OnModuleInit, OnModuleDestroy {
                 keptWorkerIds.add(existing.id);
             } else {
                 const created = await tx.worker.create({
-                    data: { name, empCode, defaultTradeId, mmsEmployeeId: emp.id, active: true },
+                    data: { name, empCode, empId, defaultTradeId, mmsEmployeeId: emp.id, active: true },
                 });
                 keptWorkerIds.add(created.id);
                 summary.workers.created++;

@@ -9,6 +9,9 @@ export interface MmsPosition {
 export interface MmsEmployee {
     id: string;
     empCode: string;
+    /** รหัสพนักงานฝั่ง client เช่น "38561733" — null ถ้ายังไม่ได้กรอกใน MMS,
+     *  undefined ถ้า MMS ยังเป็นเวอร์ชันเก่าที่ไม่ส่ง field นี้ */
+    empId?: string | null;
     name: string;
     positionId: string | null;
 }

@@ -21,7 +21,7 @@ import { useAuth } from '../../../lib/auth-context';
 import { useToast } from '../../../lib/toast';
 import { apiErrorMessage } from '../../../lib/api-errors';
 import { calculateHours, resolveDayType } from '../../../lib/timesheet-calc';
-import { formatHours, todayKey, toDateKey } from '../../../lib/format';
+import { formatHours, todayKey, toDateKey, workerLabel } from '../../../lib/format';
 import type {
   CalendarOverride,
   CreateTimesheetInput,
@@ -74,9 +74,6 @@ function activeOptions<T extends { id: string; active: boolean }>(
     .filter((item) => item.active || item.id === selectedId)
     .map((item) => ({ value: item.id, label: item.active ? label(item) : `${label(item)} (inactive)` }));
 }
-
-/** ชื่อ + รหัสพนักงาน (จาก MMS) — กันเลือกผิดคนเมื่อชื่อซ้ำ และพิมพ์ค้นด้วยรหัสได้ */
-const workerLabel = (w: Worker) => (w.empCode ? `${w.name} (${w.empCode})` : w.name);
 
 export default function FieldInputPage() {
   const { user } = useAuth();
@@ -262,7 +259,7 @@ export default function FieldInputPage() {
   // ─── แสดงผล ───
   if (loadState === 'loading') {
     return (
-      <section className="max-w-6xl mx-auto">
+      <section className="max-w-7xl mx-auto">
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 py-16 text-center text-slate-400">
           <FontAwesomeIcon icon={faSpinner} spin className="text-2xl mb-3" />
           <p>Loading projects and workers...</p>
@@ -273,7 +270,7 @@ export default function FieldInputPage() {
 
   if (loadState === 'error') {
     return (
-      <section className="max-w-6xl mx-auto">
+      <section className="max-w-7xl mx-auto">
         <div className="bg-white rounded-xl shadow-sm border border-red-200 py-12 px-6 text-center">
           <FontAwesomeIcon icon={faTriangleExclamation} className="text-3xl text-danger mb-3" />
           <p className="font-medium text-slate-800">{loadError}</p>
@@ -313,7 +310,7 @@ export default function FieldInputPage() {
     );
 
   return (
-    <section className="max-w-6xl mx-auto">
+    <section className="max-w-7xl mx-auto">
       <div ref={formTopRef} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6 scroll-mt-4">
         <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center gap-4">
           <h3 className="font-semibold text-slate-800">
@@ -431,8 +428,8 @@ export default function FieldInputPage() {
                 <table className="w-full text-sm text-left min-w-[900px]">
                   <thead className="text-xs text-slate-600 bg-slate-50 uppercase border-b border-slate-200">
                     <tr>
-                      <th className="px-4 py-3 w-1/4">Worker Name</th>
-                      <th className="px-4 py-3 w-1/5">Position / Trade</th>
+                      <th className="px-4 py-3 w-[30%]">Worker Name</th>
+                      <th className="px-4 py-3 w-[22%]">Position / Trade</th>
                       <th className="px-4 py-3 text-center">Start Time</th>
                       <th className="px-4 py-3 text-center">End Time</th>
                       <th className="px-4 py-3 text-center bg-slate-100 border-l border-slate-200" title="Calculated Standard Hours">
