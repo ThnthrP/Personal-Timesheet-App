@@ -1,0 +1,51 @@
+# CI: รัน test และ build ทุกครั้งที่ push หรือเปิด Pull Request เข้า main
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  api:
+    name: API (NestJS) — lint · test · build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    env:
+      # prisma generate ไม่ได้ต่อฐานข้อมูลจริง แต่ schema อ้าง env นี้ไว้
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24   # NestJS 12 เป็น ES module — Jest ต้องใช้ Node 24.9+ ถึงโหลดได้
+          cache: npm
+      - run: npm ci
+        working-directory: .
+      - run: npx prisma generate
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  web:
+    name: Web (Next.js) — test · build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    env:
+      NEXT_PUBLIC_API_URL: http://localhost:3001   # ค่าหลอกสำหรับ build เท่านั้น
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+        working-directory: .
+      - run: npm test
+      - run: npm run build
