@@ -104,7 +104,8 @@ model Worker {
   defaultTradeId String?
   defaultTrade   Trade?   @relation(fields: [defaultTradeId], references: [id])
   active         Boolean  @default(true)
-  empCode        String? // รหัสพนักงานจาก MMS (เช่น EXPT-001) — ใช้แสดงผล
+  empCode        String? // รหัสพนักงานจาก MMS (เช่น EXPT-001)
+  empId          String? // รหัสพนักงานฝั่ง client จาก MMS (เช่น 38561733) — ใช้แสดงผล
   mmsEmployeeId  String?  @unique // Employee.id ใน MMS — null = สร้างใน PTA เอง
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
